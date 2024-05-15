@@ -1,3 +1,7 @@
+# Novixx Music AI
+
+Novixx Music AI is an AI based on Bark, with bigger model support and training on music. Currently the models are private (since they suck) but it'll go public sometime (unless I abandon this (chances are high))
+
 # 🐶 BARK AI: but with the ability to use voice cloning on custom audio samples
 
 For RVC `git clone https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI` and train your model or point the code to you model (must clone RVC repo in bark-with-voice-clone directory)
