@@ -13,3 +13,5 @@ train_rvc.ipynb
 datasets/*.wav
 datasets/*.txt
 datasets/*.npz
+!datasets/train.txt
+!datasets/valid.txt
