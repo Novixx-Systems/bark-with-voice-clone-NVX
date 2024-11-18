@@ -41,12 +41,12 @@ global models_devices
 models_devices = {}
 
 
-CONTEXT_WINDOW_SIZE = 1024
+CONTEXT_WINDOW_SIZE = 2048
 
 SEMANTIC_RATE_HZ = 49.9
 SEMANTIC_VOCAB_SIZE = 10_000
 
-CODEBOOK_SIZE = 1024
+CODEBOOK_SIZE = 2048
 N_COARSE_CODEBOOKS = 2
 N_FINE_CODEBOOKS = 8
 COARSE_RATE_HZ = 75
@@ -479,7 +479,7 @@ def generate_text_semantic(
     assert x.shape[1] == 256 + 256 + 1
     with _inference_mode():
         x = x.to(device)
-        n_tot_steps = 768
+        n_tot_steps = 2048
         # custom tqdm updates since we don't know when eos will occur
         pbar = tqdm.tqdm(disable=silent, total=100)
         pbar_state = 0
@@ -585,7 +585,7 @@ def generate_coarse(
         and x_semantic.max() <= SEMANTIC_VOCAB_SIZE - 1
     )
     assert 60 <= max_coarse_history <= 630
-    assert max_coarse_history + sliding_window_len <= 1024 - 256
+    assert max_coarse_history + sliding_window_len <= 2048 - 256
     semantic_to_coarse_ratio = COARSE_RATE_HZ / SEMANTIC_RATE_HZ * N_COARSE_CODEBOOKS
     max_semantic_history = int(np.floor(max_coarse_history / semantic_to_coarse_ratio))
     if history_prompt is not None:
@@ -807,8 +807,8 @@ def generate_fine(
         n_history = 0
     n_remove_from_end = 0
     # need to pad if too short (since non-causal model)
-    if in_arr.shape[1] < 1024:
-        n_remove_from_end = 1024 - in_arr.shape[1]
+    if in_arr.shape[1] < 2048:
+        n_remove_from_end = 2048 - in_arr.shape[1]
         in_arr = np.hstack(
             [
                 in_arr,
@@ -816,14 +816,14 @@ def generate_fine(
             ]
         )
     # we can be lazy about fractional loop and just keep overwriting codebooks
-    n_loops = np.max([0, int(np.ceil((x_coarse_gen.shape[1] - (1024 - n_history)) / 512))]) + 1
+    n_loops = np.max([0, int(np.ceil((x_coarse_gen.shape[1] - (2048 - n_history)) / 512))]) + 1
     with _inference_mode():
         in_arr = torch.tensor(in_arr.T).to(device)
         for n in tqdm.tqdm(range(n_loops), disable=silent):
-            start_idx = np.min([n * 512, in_arr.shape[0] - 1024])
+            start_idx = np.min([n * 512, in_arr.shape[0] - 2048])
             start_fill_idx = np.min([n_history + n * 512, in_arr.shape[0] - 512])
             rel_start_fill_idx = start_fill_idx - start_idx
-            in_buffer = in_arr[start_idx : start_idx + 1024, :][None]
+            in_buffer = in_arr[start_idx : start_idx + 2048, :][None]
             for nn in range(n_coarse, N_FINE_CODEBOOKS):
                 logits = model(nn, in_buffer)
                 if temp is None:
@@ -839,7 +839,7 @@ def generate_fine(
                     codebook_preds = torch.hstack(
                         [
                             torch.multinomial(probs[nnn], num_samples=1).to(inf_device)
-                            for nnn in range(rel_start_fill_idx, 1024)
+                            for nnn in range(rel_start_fill_idx, 2048)
                         ]
                     )
                 in_buffer[0, rel_start_fill_idx:, nn] = codebook_preds
@@ -847,7 +847,7 @@ def generate_fine(
             # transfer over info into model_in and convert to numpy
             for nn in range(n_coarse, N_FINE_CODEBOOKS):
                 in_arr[
-                    start_fill_idx : start_fill_idx + (1024 - rel_start_fill_idx), nn
+                    start_fill_idx : start_fill_idx + (2048 - rel_start_fill_idx), nn
                 ] = in_buffer[0, rel_start_fill_idx:, nn]
             del in_buffer
         gen_fine_arr = in_arr.detach().cpu().numpy().squeeze().T

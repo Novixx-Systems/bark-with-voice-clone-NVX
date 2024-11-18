@@ -15,7 +15,7 @@ from torch.serialization import MAP_LOCATION
 
 
 class CustomTokenizer(nn.Module):
-    def __init__(self, hidden_size=1024, input_size=768, output_size=10000, version=0):
+    def __init__(self, hidden_size=2048, input_size=2048, output_size=10000, version=0):
         super(CustomTokenizer, self).__init__()
         next_size = input_size
         if version == 0:
@@ -129,7 +129,7 @@ class Data:
     output_size: int
     version: int
 
-    def __init__(self, input_size=768, hidden_size=1024, output_size=10000, version=0):
+    def __init__(self, input_size=2048, hidden_size=2048, output_size=10000, version=0):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size

@@ -175,16 +175,16 @@ class GPT(nn.Module):
             tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
         else:
             if merge_context:
-                assert(idx.shape[1] >= 512+512+1)
-                t = idx.shape[1] - 512
+                assert(idx.shape[1] >= 256+256+1)
+                t = idx.shape[1] - 256
             else:
                 assert t <= self.config.block_size, f"Cannot forward sequence of length {t}, block size is only {self.config.block_size}"
 
             # forward the GPT model itself
             if merge_context:
                 tok_emb = torch.cat([
-                    self.transformer.wte(idx[:,:512]) + self.transformer.wte(idx[:,512:512+512]),
-                    self.transformer.wte(idx[:,512+512:])
+                    self.transformer.wte(idx[:,:256]) + self.transformer.wte(idx[:,256:256+256]),
+                    self.transformer.wte(idx[:,256+256:])
                 ], dim=1)
             else:
                 tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
@@ -196,7 +196,6 @@ class GPT(nn.Module):
             past_length = past_kv[0][0].size(-2)
 
         if position_ids is None:
-            print (past_length, t)
             position_ids = torch.arange(past_length, t + past_length, dtype=torch.long, device=device)
             position_ids = position_ids.unsqueeze(0) # shape (1, t)
             assert position_ids.shape == (1, t)
